@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#102a43">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Warehouse Inspection">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Warehouse Inspection</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+.diag{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}.diagrow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #eef2f5;font-size:13px}.pass{color:var(--green);font-weight:700}.fail{color:var(--red);font-weight:700}.warn{color:var(--yellow);font-weight:700}.smallbtn{padding:8px 10px;font-size:12px}
+:root{--navy:#102a43;--blue:#1976d2;--bg:#f3f6f9;--card:#fff;--line:#dce5ec;--text:#172b3a;--muted:#71808d;--green:#238b45;--yellow:#d68a00;--red:#c0392b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text);padding-bottom:env(safe-area-inset-bottom)}
+header{background:linear-gradient(135deg,#102a43,#1f4e79);color:#fff;padding:16px 18px;position:sticky;top:0;z-index:5}.head{max-width:1200px;margin:auto;display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:0}.sub{font-size:12px;opacity:.78;margin-top:4px}
+.container{max-width:1200px;margin:auto;padding:14px}.nav{display:flex;gap:5px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:5px;margin-bottom:14px;overflow:auto}.nav button{white-space:nowrap;flex:1;background:transparent;color:#5e6e7b}.nav button.active{background:var(--navy);color:#fff}
+button{border:0;border-radius:9px;padding:10px 14px;background:var(--navy);color:#fff;font-weight:700;cursor:pointer}button.secondary{background:#e9f0f5;color:var(--navy)}button.good{background:var(--green)}button.bad{background:var(--red)}
+.section,.card,.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:0 2px 8px #00000008}.section{margin-bottom:13px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:13px 0}.kpi span{font-size:12px;color:var(--muted)}.kpi b{font-size:25px;display:block;margin-top:4px}
+.status{display:inline-block;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:800}.ok{background:#e1f4e7;color:#19713a}.attention{background:#fff0cf;color:#8d5b00}.critical{background:#f9dfdc;color:#a62d23}.none{background:#edf1f4;color:#63727d}
+.progress{height:7px;background:#e8edf1;border-radius:7px;overflow:hidden;margin:9px 0}.progress i{display:block;height:100%;background:var(--green)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{font-weight:700;font-size:13px;display:block;margin:9px 0 4px}input,select,textarea{width:100%;padding:10px;border:1px solid #cbd7df;border-radius:8px;background:#fff;font-size:14px}textarea{min-height:70px}
+.whgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.wh{background:#f8fafc;color:var(--navy);border:1px solid var(--line);text-align:left;min-height:65px}.wh strong{display:block}.wh small{display:block;margin-top:4px}
+.item{border:1px solid var(--line);border-radius:10px;padding:11px;margin:8px 0;background:#fbfcfd}.itemtop{display:flex;justify-content:space-between;gap:8px;align-items:center}.photo{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.photo img{width:76px;height:60px;object-fit:cover;border-radius:6px}.toolbar{display:flex;gap:7px;flex-wrap:wrap}.muted{color:var(--muted);font-size:12px}.hidden{display:none}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid var(--line);font-size:12px;text-align:left}th{background:#f1f5f8}
+#login{max-width:420px;margin:60px auto}.error{background:#fee5e2;color:#9f2b22;padding:10px;border-radius:8px;margin:10px 0;font-size:13px}
+@media(max-width:800px){.whgrid{grid-template-columns:repeat(3,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.row{grid-template-columns:1fr}.whgrid{grid-template-columns:repeat(2,1fr)}.container{padding:9px}.nav button{font-size:12px;padding:9px 8px}}
+.readonly{background:#f7f8fa;border:1px solid var(--line);border-radius:8px;padding:10px;min-height:42px;white-space:pre-wrap}.photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.photos img{width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}.note{background:#f7f8fa;border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px}.status{display:inline-block;padding:4px 8px;border-radius:999px;font-weight:700;font-size:12px}.status.attention{background:#fff0c7;color:#8a5a00}.status.critical{background:#ffd7d7;color:#a00000}.status.ok{background:#dff5e5;color:#1d6b35}.status.none{background:#eee;color:#666}</style>
+</head>
+<body>
+<header><div class="head"><div><h1>🏭 Warehouse Inspection</h1><div class="sub">Shared cloud system · 15 warehouses</div></div><div id="userBox" class="sub"></div></div></header>
+<div class="container">
+<div id="login" class="section hidden"></div>
+<div id="app" class="hidden">
+<div class="nav">
+<button id="nDash" onclick="dashboard()">📊 Dashboard</button>
+<button id="nInspect" onclick="selectWarehouse()">🏭 Inspection</button>
+<button id="nDef" onclick="defects()">⚠️ Defects</button>
+<button id="nSet" onclick="settings()">⚙️ Settings</button>
+</div>
+<div id="view"></div>
+</div>
+</div>
+<script>
+const {createClient}=supabase;
+let sb=null, user=null, warehouses=[], areas=[
+["Roof","Leaks, surface damage, drainage"],["Walls & Facade","Cracks, damage, cladding"],["Floor","Potholes, cracks, surface damage"],["Gates & Doors","Operation, locks, hinges, sealing"],["Windows","Glass, frames, sealing"],["Electrical","Lights, panels, cables, sockets"],["Lighting","Internal and external lighting"],["Fire Safety","Fire extinguishers, exits, signs, access"],["Ventilation","Ventilation, grilles, equipment"],["Housekeeping & Order","Waste, access routes, storage"],["Surrounding Area","Roads, drainage, fencing, vegetation"]];
+function areasFor(id){return id<=8?[...areas,["Tent Condition","Tears, damage, tension, fixings, frame, leaks"]]:areas}
+function normalizeSupabaseUrl(raw){
+ try{
+  let u=new URL(String(raw||'').trim());
+  u.pathname=''; u.search=''; u.hash='';
+  return u.toString().replace(/\/$/,'');
+ }catch(e){return ''}
+}
+function configStatus(){
+ const url=normalizeSupabaseUrl(window.SUPABASE_URL);
+ const key=String(window.SUPABASE_KEY||'').trim();
+ return {url,key,urlOK:/^https:\/\/[^\s]+\.supabase\.co$/i.test(url),keyOK:key.length>20&&!key.includes('YOUR_')};
+}
+function init(){
+ const c=configStatus();
+ if(!c.urlOK||!c.keyOK){showLogin('Please configure config.js with your Supabase URL and publishable key.');return}
+ sb=createClient(c.url,c.key);
+ sb.auth.getSession().then(({data,error})=>{if(error){showLogin(error.message);return}user=data.session?.user;renderAuth()}).catch(e=>showLogin(e.message));
+ sb.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;renderAuth()});
+}
+async function testConnection(){
+ const box=document.getElementById('diagnostics'); if(!box)return;
+ const c=configStatus();
+ box.innerHTML='<div class="diag"><b>Connection diagnostics</b><div class="diagrow"><span>Supabase URL</span><span class="'+(c.urlOK?'pass':'fail')+'">'+(c.urlOK?'OK':'ERROR')+'</span></div><div class="diagrow"><span>Publishable key</span><span class="'+(c.keyOK?'pass':'fail')+'">'+(c.keyOK?'OK':'ERROR')+'</span></div></div>';
+ if(!c.urlOK||!c.keyOK){box.innerHTML+='<div class="error">Open <b>config.js</b> in GitHub and enter the Supabase project URL and publishable key.</div>';return}
+ const client=sb||createClient(c.url,c.key);
+ let authOK=false,dbOK=false,storageOK=false,details=[];
+ try{const r=await client.auth.getSession();authOK=!r.error;if(r.error)details.push('Auth: '+r.error.message)}catch(e){details.push('Auth: '+e.message)}
+ try{const r=await client.from('warehouses').select('id').limit(1);dbOK=!r.error;if(r.error)details.push('Database: '+r.error.message)}catch(e){details.push('Database: '+e.message)}
+ try{const r=await client.storage.from('inspection-photos').list('',{limit:1});storageOK=!r.error;if(r.error)details.push('Storage: '+r.error.message)}catch(e){details.push('Storage: '+e.message)}
+ box.innerHTML+='<div class="diag"><div class="diagrow"><span>Authentication</span><span class="'+(authOK?'pass':'fail')+'">'+(authOK?'OK':'ERROR')+'</span></div><div class="diagrow"><span>Database / warehouses</span><span class="'+(dbOK?'pass':'fail')+'">'+(dbOK?'OK':'ERROR')+'</span></div><div class="diagrow"><span>Storage / photos</span><span class="'+(storageOK?'pass':'fail')+'">'+(storageOK?'OK':'ERROR')+'</span></div></div>'+(details.length?'<div class="error">'+details.map(esc).join('<br>')+'</div>':'<div class="section" style="margin-top:10px;background:#eef8f1;color:#196b35"><b>Connection test passed.</b> You can now create an account or sign in.</div>');
+}
+function showLogin(msg=""){
+ document.getElementById("app").classList.add("hidden");let el=document.getElementById("login");el.classList.remove("hidden");
+ el.innerHTML=`<h2>Warehouse Inspection</h2><p class="muted">Sign in to access the shared inspection system.</p><p class="muted">If this is the first setup, press <b>Test Connection</b> first.</p>${msg?`<div class="error">${esc(msg)}</div>`:""}
+ <label>Email</label><input id="email" type="email" placeholder="name@company.com">
+ <label>Password</label><input id="pass" type="password" placeholder="Password">
+ <div class="toolbar" style="margin-top:14px"><button onclick="signIn()">Sign In</button><button class="secondary" onclick="signUp()">Create Account</button><button class="secondary smallbtn" onclick="testConnection()">Test Connection</button></div><div id="diagnostics"></div>`;
+}
+async function signIn(){let {error}=await sb.auth.signInWithPassword({email:email.value,password:pass.value});if(error)showLogin(error.message)}
+async function signUp(){let {error}=await sb.auth.signUp({email:email.value,password:pass.value});if(error)showLogin(error.message);else showLogin("Account created. Check your email if confirmation is enabled, then sign in.")}
+function renderAuth(){if(!user){showLogin();return}document.getElementById("login").classList.add("hidden");document.getElementById("app").classList.remove("hidden");document.getElementById("userBox").innerHTML=`${esc(user.email)} · <button class="secondary" onclick="signOut()">Sign out</button>`;dashboard()}
+async function signOut(){await sb.auth.signOut()}
+async function loadWarehouses(){let {data,error}=await sb.from("warehouses").select("*").order("sort_order");if(error)throw error;warehouses=data||[]}
+function nav(id){["nDash","nInspect","nDef","nSet"].forEach(x=>document.getElementById(x).classList.remove("active"));document.getElementById(id).classList.add("active")}
+async function dashboard(){nav("nDash");try{await loadWarehouses();let {data:ins}=await sb.from("inspections").select("*,warehouses(name),inspection_items(status)").order("created_at",{ascending:false});let {data:def}=await sb.from("defects").select("*").neq("status","Closed");let last={};(ins||[]).forEach(i=>{if(!last[i.warehouse_id])last[i.warehouse_id]=i});let inspected=Object.keys(last).length, critical=(def||[]).filter(d=>d.priority==="Critical").length;
+view.innerHTML=`<div class="section"><h2>Inspection Dashboard</h2><div class="muted">Shared data from all devices</div></div>
+<div class="kpis"><div class="kpi"><span>Inspected</span><b>${inspected}/${warehouses.length}</b></div><div class="kpi"><span>No Issues</span><b>${warehouses.filter(w=>last[w.id]&&overall(last[w.id])==="OK").length}</b></div><div class="kpi"><span>Critical</span><b>${critical}</b></div><div class="kpi"><span>Open Defects</span><b>${(def||[]).length}</b></div></div>
+<div class="grid">${warehouses.map(w=>{let i=last[w.id],s=i?overall(i):"Not Inspected";return `<div class="card"><h3>${esc(w.name)}</h3><span class="status ${cls(s)}">${s}</span><p class="muted">${i?`Last inspection: ${i.inspection_date}`:"No inspection yet"}</p><button onclick="${i?`viewInspection('${i.id}')`:`startInspection(${w.id})`}">${i?"Open Last Inspection":"Start Inspection"}</button>${i?`<button class="secondary" style="margin-top:6px" onclick="startInspection(${w.id})">Start New Inspection</button>`:""}</div>`}).join("")}</div>`;
+}catch(e){view.innerHTML=`<div class="error">${esc(e.message)}</div>`}}
+function overall(i){let s=(i.inspection_items||[]).map(x=>x.status);if(s.includes("Critical"))return"Critical";if(s.includes("Attention"))return"Attention";return"OK"}
+function cls(s){return s==="Critical"?"critical":s==="Attention"?"attention":s==="OK"?"ok":"none"}
+async function selectWarehouse(){nav("nInspect");await loadWarehouses();let {data:ins}=await sb.from("inspections").select("id,warehouse_id,inspection_date,created_at,inspection_items(status)").order("created_at",{ascending:false});let last={};(ins||[]).forEach(i=>{if(!last[i.warehouse_id])last[i.warehouse_id]=i});view.innerHTML=`<div class="section"><h2>Select Warehouse</h2><div class="whgrid">${warehouses.map(w=>{let i=last[w.id],s=i?overall(i):"Not Inspected";return `<div><button class="wh" onclick="${i?`viewInspection('${i.id}')`:`startInspection(${w.id})`}"><strong>${esc(w.name)}</strong><small>${i?`Last: ${i.inspection_date} · ${s}`:"No inspection yet"}</small></button>${i?`<button class="secondary" style="width:100%;margin-top:5px" onclick="startInspection(${w.id})">New Inspection</button>`:""}</div>`}).join("")}</div></div>`}
+function startInspection(id){nav("nInspect");let w=warehouses.find(x=>x.id==id);let arr=areasFor(id);view.innerHTML=`<div class="section"><button class="secondary" onclick="selectWarehouse()">← Back</button><h2>New Inspection — ${esc(w.name)}</h2><div class="row"><div><label>Date</label><input id="date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div><label>Inspector</label><input id="inspector" value="${esc(user.email)}"></div></div></div><div class="section"><h3>Inspection Checklist</h3>${arr.map((a,n)=>`<div class="item"><div class="itemtop"><div><b>${n+1}. ${a[0]}</b><div class="muted">${a[1]}</div></div><select id="st${n}">${["OK","Attention","Critical","N/A"].map(x=>`<option>${x}</option>`).join("")}</select></div><label>Comment / Finding</label><textarea id="fd${n}"></textarea><label>Photos</label><input id="ph${n}" type="file" accept="image/*" capture="environment" multiple></div>`).join("")}<label>Overall Comment</label><textarea id="overallComment"></textarea><button class="good" onclick="saveInspection(${id})">💾 Save Inspection</button></div>`}
+async function viewInspection(inspectionId){nav("nInspect");view.innerHTML=`<div class="section"><p class="muted">Loading inspection...</p></div>`;try{let {data:i,error}=await sb.from("inspections").select("*,warehouses(name)").eq("id",inspectionId).single();if(error)throw error;let {data:items,error:ie}=await sb.from("inspection_items").select("*").eq("inspection_id",inspectionId).order("created_at",{ascending:true});if(ie)throw ie;let {data:photos,error:pe}=await sb.from("inspection_photos").select("*").eq("inspection_id",inspectionId).order("created_at",{ascending:true});if(pe)throw pe;let photoMap={};for(const ph of (photos||[])){let u=await sb.storage.from("inspection-photos").createSignedUrl(ph.storage_path,3600);if(!photoMap[ph.area])photoMap[ph.area]=[];if(!u.error)photoMap[ph.area].push(u.data.signedUrl)}let overallStatus=overall({inspection_items:items||[]});view.innerHTML=`<div class="section"><button class="secondary" onclick="dashboard()">← Dashboard</button><h2>Last Inspection — ${esc(i.warehouses?.name||"")}</h2><div class="row"><div><label>Date</label><input value="${esc(i.inspection_date)}" disabled></div><div><label>Inspector</label><input value="${esc(i.inspector)}" disabled></div></div><p><span class="status ${cls(overallStatus)}">${overallStatus}</span></p>${i.overall_comment?`<div class="note"><b>Overall Comment</b><div>${esc(i.overall_comment)}</div></div>`:""}</div><div class="section"><h3>Inspection Checklist</h3>${(items||[]).map((it,n)=>`<div class="item"><div class="itemtop"><div><b>${n+1}. ${esc(it.area)}</b></div><span class="status ${cls(it.status)}">${esc(it.status)}</span></div><label>Comment / Finding</label><div class="readonly">${it.finding?esc(it.finding):"No finding recorded."}</div>${(photoMap[it.area]||[]).length?`<label>Photos</label><div class="photos">${photoMap[it.area].map(u=>`<a href="${u}" target="_blank" rel="noopener"><img src="${u}" alt="Inspection photo"></a>`).join("")}</div>`:""}</div>`).join("")}</div><div class="section"><button class="good" onclick="startInspection(${i.warehouse_id})">＋ Start New Inspection</button></div>`}catch(e){view.innerHTML=`<div class="section"><button class="secondary" onclick="dashboard()">← Back</button><div class="error">${esc(e.message)}</div></div>`}}
+async function saveInspection(wid){let arr=areasFor(wid),payload={warehouse_id:wid,inspector:document.getElementById("inspector").value,inspection_date:document.getElementById("date").value,overall_comment:document.getElementById("overallComment").value};
+let {data:i,error}=await sb.from("inspections").insert(payload).select().single();if(error){alert(error.message);return}
+for(let n=0;n<arr.length;n++){let status=document.getElementById("st"+n).value,finding=document.getElementById("fd"+n).value;
+let {error:e}=await sb.from("inspection_items").insert({inspection_id:i.id,area:arr[n][0],status,finding});if(e){alert(e.message);return}
+if(status==="Attention"||status==="Critical"){await sb.from("defects").insert({inspection_id:i.id,warehouse_id:wid,area:arr[n][0],description:finding||"Inspection finding",priority:status,status:"Open"})}
+let files=document.getElementById("ph"+n).files||[];for(let f of files){let path=`${i.id}/${Date.now()}-${safe(f.name)}`;let up=await sb.storage.from("inspection-photos").upload(path,f,{upsert:false});if(!up.error)await sb.from("inspection_photos").insert({inspection_id:i.id,area:arr[n][0],storage_path:path})}
+}
+alert("Inspection saved");dashboard()}
+async function defects(){nav("nDef");let {data,error}=await sb.from("defects").select("*,warehouses(name)").order("created_at",{ascending:false});if(error){view.innerHTML=`<div class="error">${esc(error.message)}</div>`;return}view.innerHTML=`<div class="section"><h2>Defect Register</h2><div style="overflow:auto"><table><thead><tr><th>Date</th><th>Warehouse</th><th>Area</th><th>Description</th><th>Priority</th><th>Responsible</th><th>Due Date</th><th>Status</th></tr></thead><tbody>${(data||[]).map(d=>`<tr><td>${d.created_at.slice(0,10)}</td><td>${esc(d.warehouses?.name||"")}</td><td>${esc(d.area)}</td><td>${esc(d.description)}</td><td>${esc(d.priority)}</td><td><input value="${esc(d.responsible||"")}" onchange="updateDefect('${d.id}','responsible',this.value)"></td><td><input type="date" value="${d.due_date||""}" onchange="updateDefect('${d.id}','due_date',this.value)"></td><td><select onchange="updateDefect('${d.id}','status',this.value)"><option ${d.status==="Open"?"selected":""}>Open</option><option ${d.status==="In Progress"?"selected":""}>In Progress</option><option ${d.status==="Closed"?"selected":""}>Closed</option></select></td></tr>`).join("")}</tbody></table></div></div>`}
+async function updateDefect(id,key,value){await sb.from("defects").update({[key]:value}).eq("id",id)}
+async function settings(){nav("nSet");await loadWarehouses();view.innerHTML=`<div class="section"><h2>Settings</h2><p class="muted">Edit active warehouse count and names. Changes are shared with all users.</p><div class="row"><div><label>Number of Warehouses</label><input id="whCount" type="number" min="1" max="100" value="${warehouses.length}" onchange="resizeWH(this.value)"></div></div><div id="whList">${warehouses.map(w=>`<div class="row" style="margin:9px 0"><div><label>Warehouse ${w.sort_order}</label><input id="wn${w.id}" value="${esc(w.name)}"></div><div style="display:flex;align-items:end"><button class="secondary" onclick="toggleWH(${w.id},${w.active})">${w.active?"Deactivate":"Activate"}</button></div></div>`).join("")}</div><button class="good" onclick="saveWH()">💾 Save Settings</button></div>`}
+async function saveWH(){for(let w of warehouses){let el=document.getElementById("wn"+w.id);if(el)await sb.from("warehouses").update({name:el.value.trim()||`Warehouse ${w.sort_order}`}).eq("id",w.id)}alert("Settings saved");settings()}
+async function toggleWH(id,active){await sb.from("warehouses").update({active:!active}).eq("id",id);settings()}
+async function resizeWH(n){n=Math.max(1,Math.min(100,parseInt(n)||1));let max=warehouses.reduce((m,w)=>Math.max(m,w.id),0);if(n>warehouses.length){for(let k=warehouses.length+1;k<=n;k++)await sb.from("warehouses").insert({id:max+k-warehouses.length,name:`Warehouse ${k}`,sort_order:k,active:true})}else if(n<warehouses.length){let remove=warehouses.slice(n);for(let w of remove)await sb.from("warehouses").update({active:false}).eq("id",w.id)}settings()}
+function safe(s){return s.replace(/[^a-zA-Z0-9._-]/g,"_")}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+init();
+</script>
+<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw-v2.js").catch(()=>{}));</script>
+</body></html>
